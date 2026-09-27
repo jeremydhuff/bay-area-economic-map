@@ -146,19 +146,20 @@ table.data td{text-align:right;padding:5px 0 5px 22px;border-bottom:1px solid va
 table.data tr:hover td{background:var(--bg-sunk)}
 
 /* ── method ──────────────────────────────────────────────────────────── */
-.method{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.68fr);gap:0 64px;
-  margin:74px 0 0;align-items:start}
-@media(max-width:880px){.method{grid-template-columns:1fr;gap:44px}}
-.method .body{max-width:66ch}
-.method .body p{color:var(--ink-2)}
+.panel-body.mbody{max-width:70ch}
+.panel-body.mbody p{color:var(--ink-2)}
+.panel-body.mbody h3:first-of-type{margin-top:20px}
+details.panel + details.panel{margin-top:14px}
+#methodEnd{margin-top:74px}
 .eq{margin:14px 0 16px;padding:13px 0 13px 18px;border-left:2px solid var(--blue);
   font-size:19px;overflow-x:auto}
 math{font-family:var(--sans);font-size:1em}
 .eqnote{font-size:14px;color:var(--ink-3);margin:-8px 0 0;padding-left:18px;max-width:62ch}
-.aside ol{margin:0;padding-left:20px;font-size:14.5px;color:var(--ink-2)}
+.aside{max-width:78ch}
+.aside ol{margin:18px 0 0;padding-left:20px;font-size:15px;color:var(--ink-2)}
 .aside li{margin-bottom:12px}
-.aside .srcblock{margin-top:22px;padding-top:16px;border-top:1px solid var(--rule);
-  font-size:13px;line-height:1.7;color:var(--ink-2)}
+.aside .srcblock{margin-top:24px;padding-top:16px;border-top:1px solid var(--rule);
+  font-size:13.5px;line-height:1.7;color:var(--ink-2)}
 footer{margin:70px 0 0;padding-top:18px;border-top:2px solid var(--ink);
   font-size:12.5px;color:var(--ink-3);letter-spacing:.02em}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -310,9 +311,9 @@ footer{margin:70px 0 0;padding-top:18px;border-top:2px solid var(--ink);
 </section>
 
 <!-- ══ METHOD ═══════════════════════════════════════════════════════════ -->
-<div class="method">
-  <div class="body">
-    <h2>Method</h2>
+<details class="panel" id="methodEnd">
+  <summary><span class="chev"></span>Methodology</summary>
+  <div class="panel-body mbody">
     <p>The series is stitched from five regimes. Each is estimated on the best data that exists
     for its period, and each is pinned to the next so the joins are continuous rather than
     assumed. Every figure is <strong>nominal</strong> &mdash; a share of current-dollar GDP &mdash;
@@ -379,9 +380,11 @@ footer{margin:70px 0 0;padding-top:18px;border-top:2px solid var(--ink);
     in 1852 alone was about $81m against U.S. GDP of $3.1bn &mdash; 2.6% of the national economy
     dug in one year in a state whose entrep&ocirc;t, bank and workshop was San Francisco.</p>
   </div>
+</details>
 
-  <div class="aside">
-    <h2>Where this can be wrong</h2>
+<details class="panel">
+  <summary><span class="chev"></span>Where this can be wrong</summary>
+  <div class="panel-body aside">
     <ol>
       <li><strong>2025&ndash;26 is a scenario, not a measurement.</strong> It rests on one
       unobservable parameter, and the plausible range at the far right (4.5&ndash;5.0%) is nearly
@@ -430,7 +433,7 @@ footer{margin:70px 0 0;padding-top:18px;border-top:2px solid var(--ink);
       States, 1851&ndash;1880&rdquo;, <i>Journal of Economic History</i>, 1974.
     </div>
   </div>
-</div>
+</details>
 
 <footer>Ten-county definition as specified. Nominal shares of current-dollar GDP.
 Data to 1 September 2026. Estimates before 2001 and after 2024 are the author's.</footer>
