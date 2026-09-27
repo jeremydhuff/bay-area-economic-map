@@ -1,0 +1,814 @@
+<title>Bay Area Share of US GDP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS
+   White ground, one blue for the primary measure, one orange used sparingly
+   for the single series that is a ratio rather than a share. Every colour in
+   this file traces back to this block.
+   Palette validated for CVD separation and contrast: blue/orange adjacent
+   pair scores dE 24.7 normal vision, 16.5 protan, on a #FFFFFF surface.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#FFFFFF;
+  --bg-sunk:#F7F8F9;          /* collapsible panel, table header            */
+  --ink:#0F1113;              /* titles, values                             */
+  --ink-2:#5C636B;            /* body copy, annotation descriptions         */
+  --ink-3:#9AA0A8;            /* axis ticks, source notes, eyebrows         */
+  --rule:#E7E9EB;             /* gridlines, hairline dividers               */
+  --rule-2:#D8DBDE;           /* section rules                              */
+  --axis:#C9CDD1;             /* baseline axis                              */
+  --blue:#006E93;             /* shares: GDP share, population share, level */
+  --blue-soft:rgba(0,110,147,.13);
+  --orange:#B0491F;           /* ratios: income per head vs U.S.            */
+  --orange-soft:rgba(176,73,31,.13);
+  --sans:"Archivo","Helvetica Neue",Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{
+  background:var(--bg);color:var(--ink);font-family:var(--sans);
+  font-size:17px;line-height:1.55;font-feature-settings:"tnum" 1;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1200px;margin:0 auto;padding:44px 28px 96px}
+
+/* ── type ────────────────────────────────────────────────────────────── */
+.eyebrow{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);margin:0 0 18px}
+h1{font-size:clamp(34px,5.2vw,58px);font-weight:700;letter-spacing:-.028em;
+  line-height:1.02;margin:0;max-width:19ch}
+.stand{max-width:66ch;margin:20px 0 0;font-size:19.5px;line-height:1.5;color:var(--ink-2)}
+h2{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-3);margin:0 0 16px;padding-top:14px;border-top:2px solid var(--ink)}
+h3{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:28px 0 6px}
+h4{font-size:17px;font-weight:600;margin:0 0 3px;letter-spacing:-.01em}
+p{margin:0 0 13px}
+a{color:var(--blue);text-underline-offset:2px;text-decoration-thickness:.6px}
+.lede{font-size:15.5px;color:var(--ink-2);margin:0 0 14px;max-width:62ch}
+
+/* ── key-figure strip ────────────────────────────────────────────────── */
+.strip{display:flex;flex-wrap:wrap;margin:40px 0 0;
+  border-top:2px solid var(--ink);border-bottom:1px solid var(--rule)}
+.strip div{padding:15px 30px 14px 0;margin-right:30px;border-right:1px solid var(--rule)}
+.strip div:last-child{border-right:0;margin-right:0}
+.strip b{display:block;font-size:30px;font-weight:700;letter-spacing:-.03em;line-height:1.12}
+.strip span{font-size:11.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-3)}
+
+/* ── figures ─────────────────────────────────────────────────────────── */
+.figure{margin:46px 0 0}
+.figure.tight{margin-top:30px}
+.chartbox{position:relative;margin-top:4px}
+svg{display:block;width:100%;height:auto}
+.src{font-size:13.5px;color:var(--ink-3);margin:12px 0 0;max-width:96ch;line-height:1.5}
+
+/* chart primitives, styled here so the SVG stays free of inline styling */
+.gridline{stroke:var(--rule);stroke-width:1}
+.zeroline{stroke:var(--axis);stroke-width:1.4}
+.refline{stroke:var(--ink-3);stroke-width:1.4;stroke-dasharray:6 5}
+.tick{font-size:13px;fill:var(--ink-3)}
+.seam{stroke:var(--rule-2);stroke-width:1;stroke-dasharray:2 4}
+.seamlab{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;fill:var(--ink-3)}
+.annv{font-size:15px;font-weight:700}
+.annd{font-size:13.5px;fill:var(--ink-2)}
+.leader{stroke-width:1.2;opacity:.55}
+.endv{font-size:19px;font-weight:700}
+.endy{font-size:12.5px;fill:var(--ink-3)}
+.hit{fill:transparent;cursor:crosshair}
+
+/* ── legend ──────────────────────────────────────────────────────────── */
+.legend{display:flex;flex-wrap:wrap;gap:9px 26px;margin:14px 0 0;font-size:13.5px;color:var(--ink-2)}
+.legend span{display:inline-flex;align-items:center;gap:9px}
+.legend i{display:block;width:30px;height:0;border-top-style:solid}
+
+/* ── tooltip ─────────────────────────────────────────────────────────── */
+.tip{position:absolute;pointer-events:none;opacity:0;transition:opacity .08s;z-index:30;
+  background:var(--bg);border:1px solid var(--ink);padding:10px 13px 11px;min-width:196px;
+  box-shadow:3px 3px 0 rgba(15,17,19,.07)}
+.tip.on{opacity:1}
+.tip .y{font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--ink-3)}
+.tip .v{font-size:26px;font-weight:700;letter-spacing:-.03em;line-height:1.15;margin:1px 0 7px}
+.tip table{border-collapse:collapse;width:100%;font-size:12.5px}
+.tip td{padding:2px 0;color:var(--ink-2)}
+.tip td:last-child{text-align:right;color:var(--ink);font-weight:500}
+.tip .m{margin-top:8px;padding-top:7px;border-top:1px solid var(--rule);
+  font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+@media(max-width:900px){.tip{min-width:152px;padding:8px 10px 9px}
+  .tip .v{font-size:21px;margin-bottom:5px}.tip table{font-size:11px}}
+
+/* ── two-up decomposition ────────────────────────────────────────────── */
+.duo{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin:22px 0 0}
+@media(max-width:840px){.duo{grid-template-columns:1fr;gap:34px}}
+.duo .src{font-size:12.5px}
+.identity{font-size:16px;color:var(--ink-2);margin:0 0 4px}
+.identity b{color:var(--ink);font-weight:600}
+.identity .b{color:var(--blue);font-weight:600}
+.identity .o{color:var(--orange);font-weight:600}
+
+/* ── collapsible assumptions panel ───────────────────────────────────── */
+details.panel{margin:40px 0 0;border:1px solid var(--rule-2);background:var(--bg-sunk)}
+details.panel > summary{list-style:none;cursor:pointer;padding:17px 22px;
+  display:flex;align-items:center;gap:13px;font-weight:600;font-size:16px;user-select:none}
+details.panel > summary::-webkit-details-marker{display:none}
+details.panel > summary .chev{width:11px;height:11px;border-right:2px solid var(--ink-2);
+  border-bottom:2px solid var(--ink-2);transform:rotate(-45deg);transition:transform .16s;
+  margin-top:-3px;flex:0 0 auto}
+details.panel[open] > summary .chev{transform:rotate(45deg);margin-top:-6px}
+details.panel > summary .hint{font-weight:400;color:var(--ink-3);font-size:14.5px}
+.panel-body{padding:2px 22px 24px;border-top:1px solid var(--rule)}
+.panel-body > p{font-size:15px;color:var(--ink-2);max-width:78ch;margin:16px 0 20px}
+.sliders{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:22px 34px}
+.sl label{display:block;font-size:11.5px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;color:var(--ink-3);margin-bottom:4px}
+.sl .row{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.sl .val{font-size:18px;font-weight:700}
+.sl .rng{font-size:11.5px;color:var(--ink-3);margin-top:2px}
+.sl small{display:block;font-size:13px;color:var(--ink-2);line-height:1.4;margin-top:6px}
+input[type=range]{width:100%;margin:8px 0 0;accent-color:var(--blue);height:18px}
+.btnrow{display:flex;gap:9px;flex-wrap:wrap;margin:22px 0 0}
+button{font-family:inherit;font-size:12px;font-weight:600;letter-spacing:.07em;
+  text-transform:uppercase;background:transparent;color:var(--ink);
+  border:1px solid var(--ink);padding:8px 14px;cursor:pointer}
+button:hover{background:var(--ink);color:var(--bg)}
+button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+
+/* ── table ───────────────────────────────────────────────────────────── */
+.tblwrap{overflow-x:auto;margin:18px 0 0}
+table.data{border-collapse:collapse;font-size:13.5px;width:100%}
+table.data th{text-align:right;font-weight:600;font-size:11px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--ink-3);padding:0 0 8px 22px;
+  border-bottom:1.5px solid var(--ink);white-space:nowrap}
+table.data th:first-child,table.data td:first-child{text-align:left;padding-left:0}
+table.data td{text-align:right;padding:5px 0 5px 22px;border-bottom:1px solid var(--rule);white-space:nowrap}
+table.data tr:hover td{background:var(--bg-sunk)}
+
+/* ── method ──────────────────────────────────────────────────────────── */
+.method{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,.68fr);gap:0 64px;
+  margin:74px 0 0;align-items:start}
+@media(max-width:880px){.method{grid-template-columns:1fr;gap:44px}}
+.method .body{max-width:66ch}
+.method .body p{color:var(--ink-2)}
+.eq{margin:14px 0 16px;padding:13px 0 13px 18px;border-left:2px solid var(--blue);
+  font-size:19px;overflow-x:auto}
+math{font-family:var(--sans);font-size:1em}
+.eqnote{font-size:14px;color:var(--ink-3);margin:-8px 0 0;padding-left:18px;max-width:62ch}
+.aside ol{margin:0;padding-left:20px;font-size:14.5px;color:var(--ink-2)}
+.aside li{margin-bottom:12px}
+.aside .srcblock{margin-top:22px;padding-top:16px;border-top:1px solid var(--rule);
+  font-size:13px;line-height:1.7;color:var(--ink-2)}
+footer{margin:70px 0 0;padding-top:18px;border-top:2px solid var(--ink);
+  font-size:12.5px;color:var(--ink-3);letter-spacing:.02em}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<!-- ══ HEADER ═══════════════════════════════════════════════════════════ -->
+<header>
+  <p class="eyebrow">Reconstructed series &middot; ten counties &middot; 1850 to mid-2026</p>
+  <h1>Bay Area as a share of US GDP</h1>
+  <p class="stand">San Francisco, San Mateo, Santa Clara, Santa Cruz, Alameda, Contra Costa,
+  Solano, Napa, Sonoma and Marin. The rise is real but it is not a straight line: the region
+  reached 2.1% by 1880, lost ground for half a century, and did not pass that mark again until
+  1933. Everything before 2001 is estimated and everything after 2024 is a nowcast &mdash; the
+  shaded band and the controls below show how much that matters.</p>
+
+  <div class="strip">
+    <div><b id="k1880">&mdash;</b><span>1880 &middot; early peak</span></div>
+    <div><b id="k1900">&mdash;</b><span>1900 &middot; trough</span></div>
+    <div><b id="k2021">&mdash;</b><span>2021 &middot; measured peak</span></div>
+    <div><b id="k2024">&mdash;</b><span>2024 &middot; last measured</span></div>
+    <div><b id="k2026">&mdash;</b><span>2026 H1 &middot; nowcast</span></div>
+  </div>
+</header>
+
+<!-- ══ FIGURE 1 · headline series ═══════════════════════════════════════ -->
+<section class="figure">
+  <div class="chartbox">
+    <svg id="cMain" viewBox="0 0 1160 560" role="img"
+      aria-label="Ten-county Bay Area GDP as a share of U.S. GDP, 1850 to mid-2026: about 0.7% in 1850, 2.1% by 1880, a trough of 1.8% in 1900, 3.0% in 1969, a measured peak of 5.0% in 2021, and a nowcast of 4.8% for the first half of 2026."></svg>
+    <div class="tip" id="tipMain" role="status" aria-live="polite"></div>
+  </div>
+  <div class="legend" id="legMain"></div>
+  <p class="src">Nominal shares of current-dollar GDP. Pre-2001 estimated from census population
+  and historical income data; 2025&ndash;26 nowcast from state GDP. Sources: BEA county GDP and
+  personal income; BEA state accounts; Easterlin (NBER, 1960); U.S. decennial censuses;
+  Johnston &amp; Williamson, MeasuringWorth.</p>
+</section>
+
+<!-- ══ ASSUMPTIONS · collapsed by default ═══════════════════════════════ -->
+<details class="panel" id="assumptions">
+  <summary><span class="chev"></span>Assumptions
+    <span class="hint">&mdash; five parameters you can move</span></summary>
+  <div class="panel-body">
+    <p>Everything from 2001 to 2024 is measured and does not move. Everything outside that window
+    rests on the five parameters below. The shaded envelope on the charts is fixed at the
+    published range, so you can see when your own assumption leaves it.</p>
+    <div class="sliders">
+      <div class="sl">
+        <div class="row"><label for="sA">Bay per-capita income &divide; U.S., 1852</label>
+          <span class="val" id="vA"></span></div>
+        <input type="range" id="sA" min="2.5" max="5" step="0.05" value="3.5">
+        <div class="rng">2.5&times; &mdash; 5.0&times;</div>
+        <small>Gold-rush wage premium. No Easterlin estimate exists before 1880, so this is the
+        one frankly conjectural input; San Francisco day-wages ran roughly four to six times
+        eastern rates in the 1850s.</small>
+      </div>
+      <div class="sl">
+        <div class="row"><label for="sE">Easterlin Pacific relative, 1880</label>
+          <span class="val" id="vE"></span></div>
+        <input type="range" id="sE" min="1.84" max="2.24" step="0.01" value="2.04">
+        <div class="rng">1.84&times; &mdash; 2.24&times;</div>
+        <small>Easterlin's published figure is 2.04. The band here is &plusmn;10%, about the
+        accuracy usually claimed for his regional estimates.</small>
+      </div>
+      <div class="sl">
+        <div class="row"><label for="sP">Bay &divide; California premium, 1929&ndash;68</label>
+          <span class="val" id="vP"></span></div>
+        <input type="range" id="sP" min="0.92" max="1.12" step="0.005" value="1">
+        <div class="rng">relative to its 1969 level &middot; implied &phi; = <span id="vPabs"></span></div>
+        <small>How much richer the Bay Area was than California as a whole before county income
+        data begin. 1.00 holds it at the 1969 value the data pin down.</small>
+      </div>
+      <div class="sl">
+        <div class="row"><label for="sK">GDP share &divide; income share, 1969</label>
+          <span class="val" id="vK"></span></div>
+        <input type="range" id="sK" min="0.94" max="1.08" step="0.005" value="1.0105">
+        <div class="rng">measured 2001 value: 1.011</div>
+        <small>Output is counted where it is produced, income where the earner lives. This ratio
+        was 1.01 in 2001 and drifted to 1.09 by 2024.</small>
+      </div>
+      <div class="sl">
+        <div class="row"><label for="sB">Bay share of California GDP, 2025&ndash;26 drift</label>
+          <span class="val" id="vB"></span></div>
+        <input type="range" id="sB" min="-0.01" max="0.04" step="0.0025" value="0.015">
+        <div class="rng">&minus;1.0%/yr &mdash; +4.0%/yr &middot; implied 2026 &beta; = <span id="vBabs"></span></div>
+        <small>The only thing that can move the 2025&ndash;26 estimate. It ran +2.0%/yr through
+        the 2012&ndash;21 tech boom and about +0.1%/yr since 2022. No county data exists for
+        either year.</small>
+      </div>
+    </div>
+    <div class="btnrow">
+      <button id="bReset">Reset assumptions</button>
+      <button id="bBand" aria-pressed="true">Envelope</button>
+      <button id="bLog" aria-pressed="false">Log scale</button>
+      <button id="bTbl" aria-pressed="false">Data table</button>
+    </div>
+    <div id="tblwrap" class="tblwrap" hidden></div>
+  </div>
+</details>
+
+<!-- ══ FIGURE 2+3 · decomposition, on the page ══════════════════════════ -->
+<section class="figure">
+  <h2>The decomposition</h2>
+  <p class="identity">A share of output is an identity:
+    <b>share of GDP</b> = <span class="b">share of people</span> &times;
+    <span class="o">income per person, relative to the U.S.</span>
+    The whole modern rise is the second term.</p>
+  <div class="duo">
+    <div>
+      <h4>Share of U.S. population</h4>
+      <p class="lede">Ten counties as a share of U.S. residents. It peaked in 1990 and has fallen
+      since &mdash; none of the modern rise in output share is people.</p>
+      <div class="chartbox">
+        <svg id="cPopShare" viewBox="0 0 560 330" role="img"
+          aria-label="Bay Area population as a share of U.S. population, rising from 0.21% in 1850 to a peak of 2.51% in 1990 and easing to 2.30% by 2026."></svg>
+        <div class="tip" id="tipPopShare" role="status" aria-live="polite"></div>
+      </div>
+      <p class="src">Decennial census counts to 2020; Census Bureau annual estimates after.</p>
+    </div>
+    <div>
+      <h4>Income per person vs the U.S.</h4>
+      <p class="lede">Bay Area income per head divided by U.S. income per head. It fell for 120
+      years, bottomed at 1.25&times; in 1973, and has doubled since.</p>
+      <div class="chartbox">
+        <svg id="cRelInc" viewBox="0 0 560 330" role="img"
+          aria-label="Bay Area income per person relative to the U.S. average, falling from about 3.6 times in the 1850s to 1.25 times in 1973, then rising to about 2.07 times by 2026."></svg>
+        <div class="tip" id="tipRelInc" role="status" aria-live="polite"></div>
+      </div>
+      <p class="src">Derived: GDP share &divide; population share. 1.0&times; is the national average.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FIGURE 4 · population level ══════════════════════════════════════ -->
+<section class="figure">
+  <h2>Population of the ten counties</h2>
+  <p class="lede">The denominator on its own. About 48,000 people in 1852 and 7.9&nbsp;million now
+  &mdash; but the region has added 859,000 residents since 2000, fewer than it added in the single
+  decade of the 1940s, and it is smaller today than at the 2020 census.</p>
+  <div class="chartbox">
+    <svg id="cPopLevel" viewBox="0 0 1160 400" role="img"
+      aria-label="Combined population of the ten Bay Area counties, 1850 to 2026: about 48,000 in 1852, 2.7 million in 1950, 7.0 million in 2000, peaking at 8.04 million at the 2020 census and easing to about 7.90 million by 2026."></svg>
+    <div class="tip" id="tipPopLevel" role="status" aria-live="polite"></div>
+  </div>
+  <p class="src">Markers are census enumerations; the stretch after 2020 is Census Bureau annual
+  estimates, ratio-spliced to the 2020 census base. 2026 is extrapolated one year.</p>
+</section>
+
+<!-- ══ METHOD ═══════════════════════════════════════════════════════════ -->
+<div class="method">
+  <div class="body">
+    <h2>Method</h2>
+    <p>The series is stitched from five regimes. Each is estimated on the best data that exists
+    for its period, and each is pinned to the next so the joins are continuous rather than
+    assumed. Every figure is <strong>nominal</strong> &mdash; a share of current-dollar GDP &mdash;
+    which is the convention BEA uses for metropolitan shares.</p>
+
+    <h3>2001&ndash;2024 &middot; measured</h3>
+    <p>BEA's county GDP accounts begin in 2001. The ten counties are summed and divided by
+    national GDP. Nothing is estimated.</p>
+    <div class="eq"><math display="block"><mrow><msub><mi>s</mi><mi>t</mi></msub><mo>=</mo>
+      <mfrac><mrow><munder><mo>&#8721;</mo><mi>c</mi></munder><msub><mi>Y</mi><mrow><mi>c</mi><mo>,</mo><mi>t</mi></mrow></msub></mrow>
+      <msubsup><mi>Y</mi><mi>t</mi><mtext>US</mtext></msubsup></mfrac></mrow></math></div>
+    <p class="eqnote">BEA's all-industry U.S. total equals NIPA GDP exactly, so no reconciliation
+    is needed.</p>
+
+    <h3>2025&ndash;2026 &middot; nowcast</h3>
+    <p>County output for 2025 will not be published until December 2026. Split the share into the
+    Bay Area's share of California (<i>&beta;</i>) and California's share of the country
+    (<i>&gamma;</i>).</p>
+    <div class="eq"><math display="block"><mrow><msub><mover><mi>s</mi><mo>&#94;</mo></mover><mi>t</mi></msub><mo>=</mo>
+      <msub><mi>&#946;</mi><mi>t</mi></msub><mo>&#183;</mo><msub><mi>&#947;</mi><mi>t</mi></msub></mrow></math></div>
+    <p><i>&gamma;</i> is observed quarterly and it is <strong>flat</strong>: 13.82%, 13.83%,
+    13.82%, 13.81%, 13.82% for the five quarters from 2025&nbsp;Q1 to 2026&nbsp;Q1. California
+    grew 5.01% in nominal terms in 2025; the United States grew 5.00%.</p>
+    <p>That is the binding constraint. If the AI build-out has raised the Bay Area's share of
+    national output, it has done so entirely by taking share <em>from the rest of California</em>
+    &mdash; because California in total has not gained an inch on the country. Everything rests on
+    <i>&beta;</i>, which cannot be observed for either year.</p>
+
+    <h3>1969&ndash;2000 &middot; spliced on personal income</h3>
+    <p>County income runs back to 1969, thirty-two years further than county output. Write
+    <i>p<sub>t</sub></i> for the Bay Area's share of U.S. personal income and
+    <i>&kappa;<sub>t</sub></i> for the ratio of the output share to the income share. In 2001,
+    where both are observed, <i>&kappa;</i> = 1.011.</p>
+    <div class="eq"><math display="block"><mrow><msub><mover><mi>s</mi><mo>&#94;</mo></mover><mi>t</mi></msub><mo>=</mo>
+      <msub><mi>&#954;</mi><mi>t</mi></msub><mo>&#183;</mo><msub><mi>p</mi><mi>t</mi></msub></mrow></math></div>
+    <p class="eqnote">The two differ because output is booked where it is produced and income
+    where the earner lives. That wedge has widened since 2001, to 1.09 by 2024, which is a reason
+    to think it was slightly narrower before 1969 &mdash; so this segment may run a little high.</p>
+
+    <h3>1929&ndash;1968 &middot; population &times; relative income</h3>
+    <p>No county income data exist. But an income share is an identity: the population share times
+    relative income per person. <i>&pi;<sub>t</sub></i> comes from the census;
+    <i>&rho;<sub>t</sub></i> is California's per-capita income against the country from BEA state
+    accounts, which carries the Depression and the war; <i>&phi;</i> is the Bay Area's premium
+    over California.</p>
+    <div class="eq"><math display="block"><mrow><msub><mover><mi>s</mi><mo>&#94;</mo></mover><mi>t</mi></msub><mo>=</mo>
+      <msub><mi>&#960;</mi><mi>t</mi></msub><mo>&#183;</mo><msub><mi>&#961;</mi><mi>t</mi></msub><mo>&#183;</mo><mi>&#966;</mi></mrow></math></div>
+    <p class="eqnote"><i>&phi;</i> is not guessed: it is set to whatever value makes this segment
+    meet the spliced segment exactly at 1969, which gives 1.10.</p>
+
+    <h3>1850&ndash;1928 &middot; population &times; Easterlin</h3>
+    <p>The same identity, with Easterlin's estimates of Pacific-division income per head
+    (204% of the U.S. average in 1880, 135% in 1920, 120% in 1950) standing in for
+    <i>&rho;</i>, scaled by the Bay Area's premium over the division, <i>&psi;</i>.</p>
+    <div class="eq"><math display="block"><mrow><msub><mover><mi>s</mi><mo>&#94;</mo></mover><mi>t</mi></msub><mo>=</mo>
+      <msub><mi>&#960;</mi><mi>t</mi></msub><mo>&#183;</mo><mi>&#968;</mi><mo>&#183;</mo><msub><mi>e</mi><mi>t</mi></msub></mrow></math></div>
+    <p><strong>The useful accident.</strong> <i>&psi;</i> is calibrated the same way <i>&phi;</i>
+    was &mdash; chosen so this segment meets the next one at 1929 &mdash; and comes out at 1.20.
+    That is a check, not a fit: Easterlin's 1920 Pacific figure carried forward nine years lands
+    within about one percent of the level BEA's 1929 California accounts imply, using a Bay-area
+    premium of a plausible size. Two independent bodies of work agree at the seam.</p>
+    <p>Before 1880 there is no benchmark at all, so the 1852 anchor is set by hand at 3.5&times;
+    and given a wide band. As a sanity check on the order of magnitude: California's gold output
+    in 1852 alone was about $81m against U.S. GDP of $3.1bn &mdash; 2.6% of the national economy
+    dug in one year in a state whose entrep&ocirc;t, bank and workshop was San Francisco.</p>
+  </div>
+
+  <div class="aside">
+    <h2>Where this can be wrong</h2>
+    <ol>
+      <li><strong>2025&ndash;26 is a scenario, not a measurement.</strong> It rests on one
+      unobservable parameter, and the plausible range at the far right (4.5&ndash;5.0%) is nearly
+      as wide as the whole rise since 2010.</li>
+      <li><strong>1850 is the weakest point on the chart.</strong> The 1850 federal returns for
+      San Francisco, Contra Costa and Santa Clara were destroyed; the figure used here is the
+      1852 California state census. Read the first decade as an order of magnitude.</li>
+      <li><strong>The war is smoothed away.</strong> Bay Area population between census years is
+      log-interpolated, so the 1942&ndash;45 shipbuilding surge at Richmond and Sausalito &mdash;
+      and the partial exodus after &mdash; never appears. The true 1943&ndash;44 share was
+      probably a few tenths of a point above the line.</li>
+      <li><strong>Nominal shares flatter the 19th century.</strong> Prices on the Pacific coast
+      ran far above eastern prices &mdash; Coelho and Shepherd put the gap near 40% for
+      1851&ndash;1880. A real-output share would show a noticeably lower 1850s and 1860s.</li>
+      <li><strong>Population changes source at 2020.</strong> Decennial counts give way to Census
+      annual estimates, ratio-spliced to the 2020 base; 2026 is extrapolated one year. The region
+      lost 219,000 people between the 2020 census and 2022 and has recovered about a third.</li>
+      <li><strong>County boundaries move.</strong> San Mateo was carved out of San Francisco in
+      1856 and Alameda out of Contra Costa and Santa Clara in 1853, so the earliest county
+      figures are partly retrospective reconstructions.</li>
+      <li><strong>Easterlin's Pacific division is not the Bay Area.</strong> It carries Oregon and
+      Washington too. The <i>&psi;</i> premium absorbs the difference in a single constant.</li>
+      <li><strong>Even the measured segment moves.</strong> BEA revises county GDP; the 2012 jump
+      in San Mateo and the 2008 spike in Contra Costa are industry-reclassification artefacts as
+      much as economics.</li>
+    </ol>
+    <div class="srcblock">
+      <strong>Sources.</strong>
+      BEA, <a href="https://fred.stlouisfed.org/series/GDPALL06075">GDP by County (CAGDP2)</a>,
+      2001&ndash;2024.
+      BEA, <a href="https://fred.stlouisfed.org/series/PI06075">Personal Income by County
+      (CAINC1)</a>, 1969&ndash;2024.
+      BEA, <a href="https://fred.stlouisfed.org/series/CAPCPI">Per Capita Personal Income in
+      California</a>, 1929&ndash;.
+      BEA, <a href="https://fred.stlouisfed.org/series/CANQGSP">California GDP, quarterly</a>, to
+      2026&nbsp;Q1, and <a href="https://fred.stlouisfed.org/series/GDP">U.S. GDP, quarterly</a>,
+      to 2026&nbsp;Q2.
+      Census Bureau Vintage-2025 county population estimates.
+      Johnston &amp; Williamson, <a href="https://www.measuringworth.com/datasets/usgdp/">&ldquo;What
+      Was the U.S. GDP Then?&rdquo;</a>, MeasuringWorth, 1850&ndash;1928.
+      R.&nbsp;A. Easterlin, <a href="https://www.nber.org/system/files/chapters/c2475/c2475.pdf">&ldquo;Interregional
+      Differences in Per Capita Income, Population, and Total Income, 1840&ndash;1950&rdquo;</a>,
+      NBER, 1960.
+      U.S. decennial censuses, 1850&ndash;2020.
+      P.&nbsp;Coelho &amp; J.&nbsp;Shepherd, &ldquo;Differences in Regional Prices: The United
+      States, 1851&ndash;1880&rdquo;, <i>Journal of Economic History</i>, 1974.
+    </div>
+  </div>
+</div>
+
+<footer>Ten-county definition as specified. Nominal shares of current-dollar GDP.
+Data to 1 September 2026. Estimates before 2001 and after 2024 are the author's.</footer>
+</div>
+<script id="payload" type="application/json">{"years":[1850,1851,1852,1853,1854,1855,1856,1857,1858,1859,1860,1861,1862,1863,1864,1865,1866,1867,1868,1869,1870,1871,1872,1873,1874,1875,1876,1877,1878,1879,1880,1881,1882,1883,1884,1885,1886,1887,1888,1889,1890,1891,1892,1893,1894,1895,1896,1897,1898,1899,1900,1901,1902,1903,1904,1905,1906,1907,1908,1909,1910,1911,1912,1913,1914,1915,1916,1917,1918,1919,1920,1921,1922,1923,1924,1925,1926,1927,1928,1929,1930,1931,1932,1933,1934,1935,1936,1937,1938,1939,1940,1941,1942,1943,1944,1945,1946,1947,1948,1949,1950,1951,1952,1953,1954,1955,1956,1957,1958,1959,1960,1961,1962,1963,1964,1965,1966,1967,1968,1969,1970,1971,1972,1973,1974,1975,1976,1977,1978,1979,1980,1981,1982,1983,1984,1985,1986,1987,1988,1989,1990,1991,1992,1993,1994,1995,1996,1997,1998,1999,2000,2001,2002,2003,2004,2005,2006,2007,2008,2009,2010,2011,2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025,2026],"popShare":[0.002069043,0.002197865,0.002334708,0.00248007,0.002634483,0.00279851,0.00297275,0.003157838,0.00335445,0.003563303,0.00378516,0.004032053,0.00429505,0.004575202,0.004873627,0.005191517,0.005530142,0.005890855,0.006275095,0.006684399,0.007120399,0.007261642,0.007405686,0.007552587,0.007702403,0.00785519,0.008011008,0.008169916,0.008331977,0.008497253,0.008665807,0.008698768,0.008731854,0.008765066,0.008798404,0.008831869,0.008865461,0.008899181,0.00893303,0.008967007,0.009001113,0.008992719,0.008984333,0.008975955,0.008967585,0.008959222,0.008950867,0.00894252,0.008934181,0.00892585,0.008917526,0.009048784,0.009181973,0.009317123,0.009454262,0.009593419,0.009734625,0.00987791,0.0100233,0.01017084,0.01032054,0.01042418,0.01052886,0.01063459,0.01074138,0.01084925,0.0109582,0.01106824,0.01117939,0.01129165,0.01140504,0.01156523,0.01172767,0.01189239,0.01205943,0.01222881,0.01240057,0.01257474,0.01275136,0.01293046,0.01311207,0.01314678,0.01318157,0.01321646,0.01325143,0.0132865,0.01332167,0.01335692,0.01339227,0.01342772,0.01346325,0.01387213,0.01429342,0.01472751,0.01517478,0.01563563,0.01611048,0.01659976,0.01710389,0.01762333,0.01815854,0.0184035,0.01865176,0.01890337,0.01915837,0.01941682,0.01967875,0.01994421,0.02021325,0.02048593,0.02076228,0.02101068,0.02126206,0.02151644,0.02177386,0.02203437,0.02229799,0.02256477,0.02283474,0.02310793,0.0233844,0.02341524,0.02344612,0.02347705,0.02350801,0.02353902,0.02357006,0.02360115,0.02363228,0.02366345,0.02369466,0.02383565,0.02397749,0.02412017,0.0242637,0.02440809,0.02455333,0.02469944,0.02484641,0.02499426,0.02514299,0.02513002,0.02511705,0.02510409,0.02509114,0.02507819,0.02506525,0.02505232,0.02503939,0.02502647,0.02501355,0.02491139,0.02480964,0.0247083,0.02460738,0.02450687,0.02440678,0.02430709,0.0242078,0.02410893,0.02401046,0.02403396,0.02405749,0.02408104,0.02410462,0.02412821,0.02415183,0.02417548,0.02419914,0.02422283,0.02424655,0.02363469,0.02340536,0.02325334,0.02313835,0.02305494,0.02303326],"usGDP":[2656.0,2799.0,3143.0,3383.0,3789.0,4048.0,4103.0,4241.0,4151.0,4475.0,4410.0,4673.0,5881.0,7746.0,9600.0,10012.0,9098.0,8465.0,8261.0,8009.0,7899.0,7751.0,8402.0,8936.0,8659.0,8331.0,8482.0,8700.0,8555.0,9555.0,10592.0,11902.0,12519.0,12640.0,12107.0,11925.0,12549.0,13565.0,14332.0,14338.0,15607.0,15944.0,16920.0,15934.0,14606.0,16114.0,15990.0,16666.0,18663.0,20119.0,21197.0,22931.0,24754.0,26647.0,26360.0,29523.0,31794.0,34639.0,30797.0,32540.0,33746.0,34675.0,37745.0,39517.0,36831.0,39048.0,50117.0,60278.0,76567.0,79090.0,89246.0,74314.0,74140.0,86238.0,87786.0,91449.0,97885.0,96466.0,98305.0,104556.0,92160.0,77391.0,59522.0,57154.0,66800.0,74241.0,84830.0,93003.0,87352.0,93437.0,102899.0,129309.0,165952.0,203084.0,224447.0,228007.0,227535.0,249616.0,274468.0,272475.0,299827.0,346914.0,367341.0,389218.0,390549.0,425478.0,449353.0,474039.0,481229.0,521654.0,542382.0,562209.0,603922.0,637450.0,684460.0,742289.0,813414.0,859959.0,940651.0,1017615.0,1073303.0,1164850.0,1279110.0,1425376.0,1545243.0,1684904.0,1873412.0,2081826.0,2351599.0,2627333.0,2857307.0,3207041.0,3343789.0,3634038.0,4037613.0,4338979.0,4579631.0,4855215.0,5236438.0,5641580.0,5963144.0,6158129.0,6520327.0,6858559.0,7287236.0,7639749.0,8073122.0,8577552.0,9062817.0,9631172.0,10250950.0,10581930.0,10929110.0,11456450.0,12217200.0,13039200.0,13815580.0,14474230.0,14769860.0,14478070.0,15048970.0,15599730.0,16253970.0,16880680.0,17608140.0,18295020.0,18804910.0,19612100.0,20656520.0,21539980.0,21375280.0,23725640.0,26054610.0,27811520.0,29298010.0,30762100.0,32175890.0],"rho":{"1929":1.420426,"1930":1.43094,"1931":1.423588,"1932":1.450873,"1933":1.463554,"1934":1.414743,"1935":1.392037,"1936":1.436969,"1937":1.38265,"1938":1.465547,"1939":1.405803,"1940":1.424245,"1941":1.409282,"1942":1.409004,"1943":1.391142,"1944":1.317779,"1945":1.289542,"1946":1.32145,"1947":1.277622,"1948":1.247245,"1949":1.272266,"1950":1.26352,"1951":1.264743,"1952":1.279704,"1953":1.250489,"1954":1.248207,"1955":1.263428,"1956":1.255723,"1957":1.248775,"1958":1.243034,"1959":1.251757,"1960":1.255058,"1961":1.24531,"1962":1.237733,"1963":1.233511,"1964":1.229265,"1965":1.202538,"1966":1.199232,"1967":1.194501,"1968":1.190328,"1969":1.184494,"1970":1.177126,"1971":1.159825,"1972":1.158166,"1973":1.137557,"1974":1.150124,"1975":1.154516,"1976":1.157448,"1977":1.152536,"1978":1.154045,"1979":1.16276,"1980":1.170736,"1981":1.16188,"1982":1.147578,"1983":1.146392,"1984":1.141259,"1985":1.136577,"1986":1.134074,"1987":1.133241,"1988":1.121664,"1989":1.099721,"1990":1.093895,"1991":1.0897,"1992":1.074829,"1993":1.058558,"1994":1.04461,"1995":1.04355,"1996":1.046456,"1997":1.041018,"1998":1.051759,"1999":1.06881,"2000":1.086675,"2001":1.075642,"2002":1.07147,"2003":1.078642,"2004":1.082442,"2005":1.087215,"2006":1.096019,"2007":1.088997,"2008":1.063477,"2009":1.060828,"2010":1.06442,"2011":1.067797,"2012":1.08075,"2013":1.08355,"2014":1.094234,"2015":1.120274,"2016":1.141346,"2017":1.141938,"2018":1.143938,"2019":1.155858,"2020":1.184753,"2021":1.192633,"2022":1.165572,"2023":1.160988,"2024":1.179509},"piShare":{"1969":0.02989514,"1970":0.02993946,"1971":0.02977461,"1972":0.02966128,"1973":0.02900741,"1974":0.02935311,"1975":0.02981486,"1976":0.02999294,"1977":0.02999309,"1978":0.03016774,"1979":0.03045744,"1980":0.03107569,"1981":0.03135422,"1982":0.03154708,"1983":0.03230143,"1984":0.03247606,"1985":0.0324948,"1986":0.03252504,"1987":0.03247395,"1988":0.03288131,"1989":0.03273243,"1990":0.03266492,"1991":0.03296186,"1992":0.03285895,"1993":0.03256429,"1994":0.03214688,"1995":0.0326408,"1996":0.03325978,"1997":0.03353748,"1998":0.03430772,"1999":0.03597398,"2000":0.03904215,"2001":0.03765407,"2002":0.03575677,"2003":0.03493583,"2004":0.03450721,"2005":0.03454551,"2006":0.03507779,"2007":0.03509184,"2008":0.03420919,"2009":0.0337346,"2010":0.03402083,"2011":0.03459393,"2012":0.03591543,"2013":0.03629758,"2014":0.03726589,"2015":0.03898311,"2016":0.04050061,"2017":0.04149611,"2018":0.04245913,"2019":0.04243919,"2020":0.04308577,"2021":0.04407671,"2022":0.04197161,"2023":0.04167343,"2024":0.04218131},"gdpShare":{"2001":0.03805014,"2002":0.03627875,"2003":0.03581873,"2004":0.03468977,"2005":0.03502961,"2006":0.03516888,"2007":0.03543852,"2008":0.0364647,"2009":0.03578125,"2010":0.0357599,"2011":0.03641143,"2012":0.03795072,"2013":0.03919268,"2014":0.04038448,"2015":0.04205349,"2016":0.04340601,"2017":0.04505433,"2018":0.04618561,"2019":0.04735517,"2020":0.04901922,"2021":0.05001717,"2022":0.04621955,"2023":0.04574669,"2024":0.04616769},"gamma":{"2025":0.1381844,"2026":0.1381593},"beta24":0.3341367,"gammaQ":{"2025Q1":0.1381649,"2025Q2":0.1382682,"2025Q3":0.1381584,"2025Q4":0.1381474,"2026Q1":0.1381593},"censusYears":[1850,1860,1870,1880,1890,1900,1910,1920,1930,1940,1950,1960,1970,1980,1990,2000,2010,2020],"easterlin":{"1880":2.04,"1920":1.35,"1950":1.2},"bayPop":[47985,52548,57545,63017,69009,75572,82758,90628,99246,108683,119018,129394,140674,152938,166271,180766,196525,213658,232285,252535,274551,287477,301011,315182,330021,345558,361827,378861,396698,415374,434930,446609,458601,470915,483560,496545,509878,523569,537628,552064,566888,577264,587830,598589,609545,620702,632063,643631,655412,667408,679624,702908,726990,751897,777657,804300,831856,860355,889832,920318,951848,974900,998510,1022691,1047459,1072826,1098807,1125418,1152673,1180589,1209180,1244718,1281301,1318958,1357723,1397627,1438703,1480987,1524514,1569319,1615442,1631131,1646972,1662966,1679117,1695424,1711889,1728514,1745301,1762251,1779365,1858395,1940934,2027140,2117174,2211208,2309417,2411989,2519116,2631001,2747856,2832603,2919964,3010019,3102851,3198547,3297194,3398883,3503709,3611767,3723158,3815117,3909347,4005905,4104848,4206234,4310125,4416581,4525667,4637448,4751989,4810260,4869245,4928954,4989394,5050576,5112508,5175200,5238660,5302899,5367925,5450506,5534357,5619498,5705949,5793730,5882861,5973364,6065258,6158567,6253311,6327794,6403165,6479433,6556610,6634706,6713732,6793699,6874619,6956503,7039362,7075874,7112575,7149467,7186549,7223825,7261293,7298956,7336814,7374869,7413121,7473219,7533803,7594879,7656450,7718520,7781094,7844174,7907766,7971874,8036501,7847852,7817790,7831866,7874792,7886543,7898311],"popPeak":2020,"popTrough":2022}</script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   Bay Area share of US GDP — 1850 to mid-2026
+   ───────────────────────────────────────────────────────────────────────
+   Structure, for anyone picking this file up:
+     1. DATA        parsed from the JSON payload above
+     2. MODEL       five estimation regimes -> one annual series
+     3. BAND        min/max envelope over a 3^5 grid of the five parameters
+     4. Chart       one generic SVG line-chart renderer, used four times
+     5. CHARTS      the four configurations
+     6. UI          slider / toggle wiring, key figures, data table
+   Colours and type come from the CSS token block; nothing is styled inline
+   except series colour, which is data-dependent.
+   ═══════════════════════════════════════════════════════════════════════ */
+(function(){
+"use strict";
+
+/* ── 1 · DATA ────────────────────────────────────────────────────────── */
+var D  = JSON.parse(document.getElementById("payload").textContent);
+var Y0 = 1850, Y1 = 2026, N = Y1 - Y0 + 1;
+var BLUE = "#006E93", ORANGE = "#B0491F";
+var BLUE_SOFT = "rgba(0,110,147,.13)", ORANGE_SOFT = "rgba(176,73,31,.13)";
+
+var ix  = function(y){ return y - Y0; };
+var ps  = function(y){ return D.popShare[ix(y)]; };
+var li  = function(a,b,f){ return Math.exp(Math.log(a)*(1-f) + Math.log(b)*f); };
+var esc = function(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;"); };
+var pct = function(v){ return (100*v).toFixed(2) + "%"; };
+var pct1= function(v){ return (100*v).toFixed(1) + "%"; };
+var mult= function(v){ return v.toFixed(2) + "×"; };
+var mfmt= function(v){ return v>=1e6 ? (v/1e6).toFixed(2)+"m" : Math.round(v/1e3)+"k"; };
+
+var K2001 = D.gdpShare["2001"] / D.piShare["2001"];
+var E20 = D.easterlin["1920"], E50 = D.easterlin["1950"];
+
+/* ── 2 · MODEL ───────────────────────────────────────────────────────── */
+function model(A, E, drift, k69, bgrow){
+  var s = new Array(N), r = new Array(N), y;
+  for(y=2001; y<=2024; y++) s[ix(y)] = D.gdpShare[y];                       // measured
+  for(y=2025; y<=2026; y++) s[ix(y)] = D.beta24*Math.exp(bgrow*(y-2024))*D.gamma[y];
+  for(y=1969; y<=2000; y++) s[ix(y)] = li(k69, K2001, (y-1969)/32)*D.piShare[y];
+  var phi69 = s[ix(1969)] / (ps(1969)*D.rho[1969]), phi = phi69*drift;      // pinned at 1969
+  for(y=1929; y<=1968; y++) s[ix(y)] = ps(y)*D.rho[y]*phi;
+  var east = function(t){ return t<=1920 ? li(E,E20,(t-1880)/40) : li(E20,E50,(t-1920)/30); };
+  var psi = (D.rho[1929]*phi) / east(1929);                                 // pinned at 1929
+  for(y=1850; y<=1928; y++)
+    s[ix(y)] = ps(y) * (y>=1880 ? psi*east(y) : li(A, psi*E, (y-1852)/28));
+  for(y=Y0; y<=Y1; y++) r[ix(y)] = s[ix(y)]/ps(y);
+  return { s:s, r:r, phi:phi, phi69:phi69, psi:psi };
+}
+var DEFAULTS = { A:3.5, E:2.04, P:1, K:K2001, B:0.015 };
+
+/* ── 3 · BAND ────────────────────────────────────────────────────────── */
+var BAND = (function(){
+  var lo = new Array(N), hi = new Array(N), i;
+  for(i=0;i<N;i++){ lo[i]=Infinity; hi[i]=-Infinity; }
+  var As=[2.5,3.5,5.0], Es=[1.84,2.04,2.24], Ps=[0.92,1,1.12],
+      Ks=[0.96,K2001,1.06], Bs=[-0.01,0.015,0.04];
+  As.forEach(function(A){ Es.forEach(function(E){ Ps.forEach(function(P){
+  Ks.forEach(function(K){ Bs.forEach(function(B){
+    var m = model(A,E,P,K,B);
+    for(var i=0;i<N;i++){ if(m.s[i]<lo[i]) lo[i]=m.s[i]; if(m.s[i]>hi[i]) hi[i]=m.s[i]; }
+  });});});});});
+  var rlo=new Array(N), rhi=new Array(N);
+  for(i=0;i<N;i++){ rlo[i]=lo[i]/D.popShare[i]; rhi[i]=hi[i]/D.popShare[i]; }
+  return { lo:lo, hi:hi, rlo:rlo, rhi:rhi };
+})();
+
+var S = { A:3.5, E:2.04, P:1, K:K2001, B:0.015, band:true, log:false, tbl:false };
+var M = model(S.A,S.E,S.P,S.K,S.B);
+
+var basis = function(y){
+  return y>=2025 ? "Nowcast · state GDP × modelled Bay share"
+       : y>=2001 ? "Measured · BEA county GDP"
+       : y>=1969 ? "Spliced · BEA county personal income"
+       : y>=1929 ? "Modelled · census × BEA state income"
+       :           "Modelled · census × Easterlin"; };
+
+/* ── 4 · Chart · one renderer, four instances ────────────────────────── */
+/* Places the tooltip in whichever of eight candidate slots covers least:
+   sitting under the cursor is disqualifying, each line vertex underneath
+   is a penalty, and the plot corners are a last resort.                  */
+function placeTip(el, rect, mx, my, pts){
+  var bw = el.offsetWidth, bh = el.offsetHeight, G = 22, FALLBACK = 520;
+  var cands = [[mx+G,my+G,0],[mx-G-bw,my+G,0],[mx+G,my-G-bh,0],[mx-G-bw,my-G-bh,0],
+               [4,4,FALLBACK],[rect.width-bw-4,4,FALLBACK],
+               [4,rect.height-bh-4,FALLBACK],[rect.width-bw-4,rect.height-bh-4,FALLBACK]];
+  var best=[2,2], bestScore=Infinity;
+  cands.forEach(function(c){
+    var x = Math.max(2, Math.min(c[0], rect.width-bw-2));
+    var y = Math.max(2, Math.min(c[1], rect.height-bh-2));
+    var sc = Math.abs(x-c[0])*0.6 + Math.abs(y-c[1])*0.6 + c[2];
+    if(mx>=x-6 && mx<=x+bw+6 && my>=y-6 && my<=y+bh+6) sc += 1e5;
+    var hits=0;
+    for(var i=0;i<pts.length;i++)
+      if(pts[i].x>=x-3 && pts[i].x<=x+bw+3 && pts[i].y>=y-3 && pts[i].y<=y+bh+3) hits++;
+    sc += Math.min(hits,40)*11;
+    if(sc<bestScore){ bestScore=sc; best=[x,y]; }
+  });
+  el.style.left = best[0]+"px"; el.style.top = best[1]+"px";
+}
+
+function Chart(cfg){
+  var W=cfg.W, H=cfg.H, m=cfg.pad;
+  var PLW=W-m.l-m.r, PLH=H-m.t-m.b;
+  var X = function(y){ return m.l + (y-Y0)/(Y1-Y0)*PLW; };
+  var Y = function(v){
+    if(cfg.log){ var a=Math.log(cfg.logMin), b=Math.log(cfg.logMax);
+      return m.t + (1-(Math.log(Math.max(v,cfg.logMin))-a)/(b-a))*PLH; }
+    return m.t + (1-(v-cfg.yMin)/(cfg.yMax-cfg.yMin))*PLH;
+  };
+  var g = "";
+
+  // gridlines + y ticks
+  (cfg.log ? cfg.logTicks : cfg.yTicks).forEach(function(t){
+    g += '<line class="'+(t===cfg.yMin?"zeroline":"gridline")+'" x1="'+m.l+'" x2="'+(W-m.r)+
+         '" y1="'+Y(t).toFixed(1)+'" y2="'+Y(t).toFixed(1)+'"/>'+
+         '<text class="tick" x="'+(m.l-12)+'" y="'+(Y(t)+4.5).toFixed(1)+
+         '" text-anchor="end">'+cfg.yFmt(t)+'</text>';
+  });
+  if(cfg.yLabel)
+    g += '<text class="seamlab" x="'+(m.l-4)+'" y="'+(m.t-18)+'" text-anchor="start">'+esc(cfg.yLabel)+'</text>';
+
+  // x ticks
+  cfg.xTicks.forEach(function(t){
+    g += '<text class="tick" x="'+X(t).toFixed(1)+'" y="'+(H-m.b+24)+'" text-anchor="middle">'+t+'</text>';
+  });
+
+  // uncertainty bands, clipped to the plot
+  g += '<clipPath id="clip-'+cfg.el+'"><rect x="'+m.l+'" y="'+(m.t-10)+'" width="'+PLW+'" height="'+(PLH+10)+'"/></clipPath>';
+  if(cfg.bands && S.band) cfg.bands.forEach(function(b){
+    var up="", dn="", y;
+    for(y=b.from; y<=b.to; y++) up += (up?"L":"M")+X(y).toFixed(1)+" "+Y(b.hi[ix(y)]).toFixed(1);
+    for(y=b.to; y>=b.from; y--) dn += "L"+X(y).toFixed(1)+" "+Y(b.lo[ix(y)]).toFixed(1);
+    g += '<path d="'+up+dn+'Z" fill="'+b.fill+'" clip-path="url(#clip-'+cfg.el+')"/>';
+  });
+
+  // reference line (relative-income chart only)
+  if(cfg.refLine){
+    g += '<line class="refline" x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+Y(cfg.refLine.v).toFixed(1)+
+         '" y2="'+Y(cfg.refLine.v).toFixed(1)+'"/>'+
+         '<text class="tick" x="'+(m.l+6)+'" y="'+(Y(cfg.refLine.v)+16).toFixed(1)+
+         '" text-anchor="start">'+esc(cfg.refLine.label)+'</text>';
+  }
+
+  // regime seams
+  if(cfg.seams) cfg.seams.forEach(function(sy){
+    g += '<line class="seam" x1="'+X(sy).toFixed(1)+'" x2="'+X(sy).toFixed(1)+
+         '" y1="'+(m.t-6)+'" y2="'+(H-m.b)+'"/>';
+  });
+
+  // the series, drawn as styled segments
+  cfg.segs.forEach(function(sg){
+    var d="", y, v;
+    for(y=sg.from; y<=sg.to; y++){ v=cfg.get(y); if(v==null) continue;
+      d += (d?"L":"M")+X(y).toFixed(1)+" "+Y(v).toFixed(1); }
+    g += '<path d="'+d+'" fill="none" stroke="'+cfg.color+'" stroke-width="'+sg.w+
+         '" stroke-linejoin="round" stroke-linecap="round"'+
+         (sg.dash ? ' stroke-dasharray="'+sg.dash+'"' : '')+'/>';
+  });
+
+  // census markers
+  if(cfg.markers) cfg.markers.forEach(function(my){
+    if(my>Y1) return;
+    g += '<circle cx="'+X(my).toFixed(1)+'" cy="'+Y(cfg.get(my)).toFixed(1)+
+         '" r="3.4" fill="var(--bg)" stroke="'+cfg.color+'" stroke-width="1.8"/>';
+  });
+  if(cfg.openEnd)
+    g += '<circle cx="'+X(Y1).toFixed(1)+'" cy="'+Y(cfg.get(Y1)).toFixed(1)+
+         '" r="4.6" fill="var(--bg)" stroke="'+cfg.color+'" stroke-width="2.4"/>';
+
+  // annotations
+  (cfg.anns||[]).forEach(function(a){
+    var x=X(a.year), y=Y(cfg.get(a.year)), tx=x+a.dx, ty=y+a.dy;
+    var nd=(a.desc||[]).length;
+    var blockBottom = ty + (nd ? 22+(nd-1)*20 : 0) + 6;      // lowest ink of the label
+    var y2 = a.dy<0 ? blockBottom+6 : ty-19;                 // stop clear of the text
+    g += '<line class="leader" stroke="'+cfg.color+'" x1="'+(x+Math.sign(a.dx||1)*6).toFixed(1)+
+         '" y1="'+(y+Math.sign(a.dy)*6).toFixed(1)+'" x2="'+(tx-Math.sign(a.dx||1)*5).toFixed(1)+
+         '" y2="'+y2.toFixed(1)+'"/>'+
+         '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="4" fill="'+cfg.color+'"/>'+
+         '<text class="annv" x="'+tx.toFixed(1)+'" y="'+ty.toFixed(1)+'" text-anchor="'+a.anchor+
+         '" fill="'+cfg.color+'">'+esc(a.val)+'</text>';
+    (a.desc||[]).forEach(function(t,i){
+      g += '<text class="annd" x="'+tx.toFixed(1)+'" y="'+(ty+22+i*20).toFixed(1)+
+           '" text-anchor="'+a.anchor+'">'+esc(t)+'</text>';
+    });
+  });
+
+  // direct end label
+  if(cfg.end){
+    var ey=Y(cfg.get(cfg.end.year));
+    g += '<text class="endv" x="'+(W-m.r+13)+'" y="'+(ey-1).toFixed(1)+'" fill="'+cfg.color+'">'+
+         esc(cfg.end.val)+'</text>'+
+         '<text class="endy" x="'+(W-m.r+13)+'" y="'+(ey+18).toFixed(1)+'">'+esc(cfg.end.sub)+'</text>';
+  }
+
+  // hover furniture
+  g += '<g class="xh" style="opacity:0"><line class="zeroline" y1="'+m.t+'" y2="'+(H-m.b)+
+       '" stroke-dasharray="2 3"/><circle r="4.8" fill="var(--bg)" stroke="'+cfg.color+'" stroke-width="2.4"/></g>'+
+       '<rect class="hit" x="'+m.l+'" y="'+m.t+'" width="'+PLW+'" height="'+PLH+'"/>';
+
+  var svg = document.getElementById(cfg.el);
+  svg.innerHTML = g;
+
+  var hit=svg.querySelector(".hit"), xh=svg.querySelector(".xh");
+  var ln=xh.querySelector("line"), dt=xh.querySelector("circle");
+  var tip=document.getElementById(cfg.tip);
+  function move(ev){
+    var rect=svg.getBoundingClientRect(), sc=W/rect.width;
+    var yr=Math.round(Y0 + ((ev.clientX-rect.left)*sc - m.l)/PLW*(Y1-Y0));
+    yr=Math.max(Y0,Math.min(Y1,yr));
+    var v=cfg.get(yr); if(v==null) return;
+    xh.style.opacity=1;
+    ln.setAttribute("x1",X(yr)); ln.setAttribute("x2",X(yr));
+    dt.setAttribute("cx",X(yr)); dt.setAttribute("cy",Y(v));
+    var t=cfg.tipData(yr);
+    tip.innerHTML='<div class="y">'+yr+'</div><div class="v">'+t.head+'</div><table>'+
+      t.rows.map(function(r){ return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>'; }).join("")+
+      '</table><div class="m">'+esc(t.foot)+'</div>';
+    var kx=rect.width/W, ky=rect.height/H, pts=[];
+    for(var y=Y0;y<=Y1;y++){ var q=cfg.get(y); if(q!=null) pts.push({x:X(y)*kx, y:Y(q)*ky}); }
+    placeTip(tip, rect, ev.clientX-rect.left, ev.clientY-rect.top, pts);
+    tip.classList.add("on");
+  }
+  hit.addEventListener("mousemove", move);
+  hit.addEventListener("mouseleave", function(){ tip.classList.remove("on"); xh.style.opacity=0; });
+  hit.addEventListener("touchmove", function(e){
+    if(e.touches[0]){ move(e.touches[0]); e.preventDefault(); } }, {passive:false});
+}
+
+/* ── 5 · CHARTS ──────────────────────────────────────────────────────── */
+var SEGS = [ {from:1850,to:2001,w:2,dash:"7 5"},
+             {from:2001,to:2024,w:3.4},
+             {from:2024,to:2026,w:2,dash:"2 4"} ];
+var XT = [1850,1875,1900,1925,1950,1975,2000,2026];
+
+function drawAll(){
+  /* 1 · headline share ------------------------------------------------ */
+  Chart({
+    el:"cMain", tip:"tipMain", W:1160, H:560, pad:{t:58,r:118,b:46,l:64},
+    color:BLUE, yMin:0, yMax:0.056, yTicks:[0,0.01,0.02,0.03,0.04,0.05],
+    yFmt:function(t){ return t===0 ? "0" : (100*t).toFixed(0)+(t===0.05?"%":""); },
+    log:S.log, logMin:0.005, logMax:0.065, logTicks:[0.005,0.01,0.02,0.03,0.04,0.05,0.06],
+    yLabel:"% of U.S. GDP", xTicks:XT, seams:[1929,1969,2001,2024], segs:SEGS, openEnd:true,
+    bands:[{lo:BAND.lo,hi:BAND.hi,from:1850,to:2000,fill:BLUE_SOFT},
+           {lo:BAND.lo,hi:BAND.hi,from:2024,to:2026,fill:BLUE_SOFT}],
+    get:function(y){ return M.s[ix(y)]; },
+    anns:[{year:1880,dx:14,dy:-41,anchor:"start",val:"2.1% by 1880",desc:["silver, rail and Pacific finance"]},
+          {year:1900,dx:-14,dy:96,anchor:"end",val:"1.8% in 1900",desc:["as the Midwest industrialised"]},
+          {year:2021,dx:-117,dy:-30,anchor:"end",val:"5.0% peak, 2021",desc:[]}],
+    end:{year:2026,val:pct1(M.s[ix(2026)]),sub:"2026 H1 · nowcast"},
+    tipData:function(y){
+      var i=ix(y), gdp=M.s[i]*D.usGDP[i]/1000;
+      var rows=[["Bay Area GDP","$"+(gdp>=1000?(gdp/1000).toFixed(2)+"tn":Math.round(gdp)+"bn")],
+                ["Population share",pct(ps(y))],
+                ["Income per head vs U.S.",mult(M.r[i])]];
+      if(y<2001||y>2024) rows.push(["Envelope",pct1(BAND.lo[i])+" – "+pct1(BAND.hi[i])]);
+      return {head:pct(M.s[i]), rows:rows, foot:basis(y)};
+    }
+  });
+
+  /* 2 · population share ---------------------------------------------- */
+  Chart({
+    el:"cPopShare", tip:"tipPopShare", W:560, H:330, pad:{t:30,r:74,b:40,l:52},
+    color:BLUE, yMin:0, yMax:0.028, yTicks:[0,0.01,0.02],
+    yFmt:function(t){ return t===0 ? "0" : (100*t).toFixed(0)+"%"; },
+    xTicks:[1850,1900,1950,2026], markers:D.censusYears,
+    segs:[{from:1850,to:2020,w:2.6},{from:2020,to:2026,w:2,dash:"3 4"}],
+    get:function(y){ return ps(y); },
+    anns:[{year:1990,dx:-14,dy:-34,anchor:"end",val:"2.51% in 1990",desc:["the peak"]}],
+    end:{year:2026,val:pct1(ps(2026)),sub:"2026"},
+    tipData:function(y){ return {head:pct(ps(y)),
+      rows:[["Residents",D.bayPop[ix(y)].toLocaleString()],
+            ["Share of U.S. GDP",pct(M.s[ix(y)])]],
+      foot:y>2020?"Census annual estimate":(D.censusYears.indexOf(y)>=0?"Census enumeration":"Interpolated between censuses")}; }
+  });
+
+  /* 3 · relative income — the one orange series ------------------------ */
+  Chart({
+    el:"cRelInc", tip:"tipRelInc", W:560, H:330, pad:{t:30,r:74,b:40,l:52},
+    color:ORANGE, yMin:0, yMax:4, yTicks:[0,1,2,3,4],
+    yFmt:function(t){ return t===0 ? "0" : t.toFixed(0)+(t===4?"×":""); },
+    xTicks:[1850,1900,1950,2026], refLine:{v:1,label:"U.S. average"},
+    segs:SEGS, openEnd:true,
+    bands:[{lo:BAND.rlo,hi:BAND.rhi,from:1850,to:2000,fill:ORANGE_SOFT},
+           {lo:BAND.rlo,hi:BAND.rhi,from:2024,to:2026,fill:ORANGE_SOFT}],
+    get:function(y){ return M.r[ix(y)]; },
+    anns:[{year:1973,dx:-12,dy:52,anchor:"end",val:"1.25× in 1973",desc:[]}],
+    end:{year:2026,val:mult(M.r[ix(2026)]),sub:"2026 H1"},
+    tipData:function(y){ return {head:mult(M.r[ix(y)]),
+      rows:[["Share of U.S. GDP",pct(M.s[ix(y)])],["Population share",pct(ps(y))]],
+      foot:basis(y)}; }
+  });
+
+  /* 4 · population level ---------------------------------------------- */
+  Chart({
+    el:"cPopLevel", tip:"tipPopLevel", W:1160, H:400, pad:{t:36,r:112,b:46,l:78},
+    color:BLUE, yMin:0, yMax:9e6, yTicks:[0,2e6,4e6,6e6,8e6],
+    yFmt:function(t){ return t===0 ? "0" : mfmt(t); },
+    yLabel:"residents, ten counties", xTicks:XT, markers:D.censusYears,
+    segs:[{from:1850,to:2020,w:2.8},{from:2020,to:2026,w:2.2,dash:"3 4"}],
+    get:function(y){ return D.bayPop[ix(y)]; },
+    anns:[{year:1950,dx:-12,dy:-87,anchor:"end",val:"+54% in the 1940s",
+           desc:["war work at Richmond and Sausalito"]},
+          {year:D.popTrough,dx:-12,dy:92,anchor:"end",val:"−219k from the 2020 peak",desc:[]}],
+    end:{year:2026,val:mfmt(D.bayPop[ix(2026)]),sub:"2026 est."},
+    tipData:function(y){
+      var v=D.bayPop[ix(y)], prev=y>Y0+10?D.bayPop[ix(y-10)]:null;
+      var rows=[["Residents",v.toLocaleString()],["Share of U.S.",pct(ps(y))]];
+      if(prev) rows.splice(1,0,["Change, 10 yr",(v>=prev?"+":"−")+Math.abs(100*(v/prev-1)).toFixed(1)+"%"]);
+      return {head:mfmt(v), rows:rows,
+        foot:y>2020?"Census annual estimate":(D.censusYears.indexOf(y)>=0?"Census enumeration":"Interpolated between censuses")};
+    }
+  });
+}
+
+/* ── 6 · UI ──────────────────────────────────────────────────────────── */
+function legend(){
+  document.getElementById("legMain").innerHTML =
+    [["3.4px solid","2001–24 measured, BEA county GDP"],
+     ["2px dashed","pre-2001 estimated from census and income data"],
+     ["2px dotted","2025–26 nowcast, no county data published yet"]]
+    .map(function(r){ return '<span><i style="border-top:'+r[0]+' '+BLUE+'"></i>'+r[1]+'</span>'; }).join("") +
+    '<span><i style="border-top:9px solid '+BLUE_SOFT+'"></i>range across modelling assumptions</span>';
+}
+function table(){
+  var yrs=[], y; for(y=1850;y<=2020;y+=10) yrs.push(y); yrs.push(2024,2025,2026);
+  document.getElementById("tblwrap").innerHTML =
+    '<table class="data"><thead><tr><th>Year</th><th>Share of U.S. GDP</th><th>Envelope</th>'+
+    '<th>Population</th><th>Population share</th><th>Income per head</th><th>Basis</th></tr></thead><tbody>'+
+    yrs.map(function(y){ var i=ix(y);
+      return '<tr><td>'+y+'</td><td>'+pct(M.s[i])+'</td><td>'+
+        ((y<2001||y>2024)?pct1(BAND.lo[i])+" – "+pct1(BAND.hi[i]):"measured")+'</td><td>'+
+        D.bayPop[i].toLocaleString()+'</td><td>'+pct(ps(y))+'</td><td>'+mult(M.r[i])+
+        '</td><td style="text-align:left">'+esc(basis(y).split(" · ")[0])+'</td></tr>';
+    }).join("")+'</tbody></table>';
+}
+function refresh(){
+  M = model(S.A,S.E,S.P,S.K,S.B);
+  document.getElementById("vA").textContent = S.A.toFixed(2)+"×";
+  document.getElementById("vE").textContent = S.E.toFixed(2)+"×";
+  document.getElementById("vP").textContent = S.P.toFixed(3);
+  document.getElementById("vPabs").textContent = M.phi.toFixed(3);
+  document.getElementById("vK").textContent = S.K.toFixed(3);
+  document.getElementById("vB").textContent = (S.B>=0?"+":"")+(100*S.B).toFixed(2)+"%/yr";
+  document.getElementById("vBabs").textContent = (100*D.beta24*Math.exp(2*S.B)).toFixed(1)+"%";
+  [["k1880",1880],["k1900",1900],["k2021",2021],["k2024",2024],["k2026",2026]]
+    .forEach(function(p){ document.getElementById(p[0]).textContent = pct(M.s[ix(p[1])]); });
+  drawAll(); legend(); if(S.tbl) table();
+}
+function bindSlider(id,key){
+  var el=document.getElementById(id);
+  el.addEventListener("input", function(){ S[key]=parseFloat(el.value); refresh(); });
+}
+function bindToggle(id,key,after){
+  var b=document.getElementById(id);
+  b.addEventListener("click", function(){
+    S[key]=!S[key]; b.setAttribute("aria-pressed",S[key]); if(after) after(); refresh(); });
+}
+bindSlider("sA","A"); bindSlider("sE","E"); bindSlider("sP","P");
+bindSlider("sK","K"); bindSlider("sB","B");
+document.getElementById("sK").value = K2001;
+document.getElementById("bReset").addEventListener("click", function(){
+  Object.keys(DEFAULTS).forEach(function(k){ S[k]=DEFAULTS[k]; });
+  document.getElementById("sA").value=S.A; document.getElementById("sE").value=S.E;
+  document.getElementById("sP").value=S.P; document.getElementById("sK").value=S.K;
+  document.getElementById("sB").value=S.B; refresh();
+});
+bindToggle("bBand","band");
+bindToggle("bLog","log");
+bindToggle("bTbl","tbl", function(){ document.getElementById("tblwrap").hidden = !S.tbl; });
+
+refresh();
+})();
+</script>
