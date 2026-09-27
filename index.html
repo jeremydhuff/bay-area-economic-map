@@ -43,7 +43,7 @@ h1{font-size:clamp(34px,5.2vw,58px);font-weight:700;letter-spacing:-.028em;
   line-height:1.02;margin:0;max-width:19ch}
 .stand{max-width:66ch;margin:20px 0 0;font-size:19.5px;line-height:1.5;color:var(--ink-2)}
 h2{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--ink-3);margin:0 0 16px;padding-top:14px;border-top:2px solid var(--ink)}
+  color:var(--ink-2);margin:0 0 16px;padding-top:14px;border-top:2px solid var(--ink)}
 h3{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:28px 0 6px}
 h4{font-size:17px;font-weight:600;margin:0 0 3px;letter-spacing:-.01em}
 p{margin:0 0 13px}
@@ -297,7 +297,7 @@ footer{margin:70px 0 0;padding-top:18px;border-top:2px solid var(--ink);
 <!-- ══ FIGURE 4 · population level ══════════════════════════════════════ -->
 <section class="figure">
   <h2>Population of the ten counties</h2>
-  <p class="lede">The denominator on its own. About 48,000 people in 1852 and 7.9&nbsp;million now
+  <p class="lede">~48,000 people in 1852 and 7.9&nbsp;million now
   &mdash; but the region has added 859,000 residents since 2000, fewer than it added in the single
   decade of the 1940s, and it is smaller today than at the 2020 census.</p>
   <div class="chartbox">
@@ -369,7 +369,7 @@ footer{margin:70px 0 0;padding-top:18px;border-top:2px solid var(--ink);
     <i>&rho;</i>, scaled by the Bay Area's premium over the division, <i>&psi;</i>.</p>
     <div class="eq"><math display="block"><mrow><msub><mover><mi>s</mi><mo>&#94;</mo></mover><mi>t</mi></msub><mo>=</mo>
       <msub><mi>&#960;</mi><mi>t</mi></msub><mo>&#183;</mo><mi>&#968;</mi><mo>&#183;</mo><msub><mi>e</mi><mi>t</mi></msub></mrow></math></div>
-    <p><strong>The useful accident.</strong> <i>&psi;</i> is calibrated the same way <i>&phi;</i>
+    <p><i>&psi;</i> is calibrated the same way <i>&phi;</i>
     was &mdash; chosen so this segment meets the next one at 1929 &mdash; and comes out at 1.20.
     That is a check, not a fit: Easterlin's 1920 Pacific figure carried forward nine years lands
     within about one percent of the level BEA's 1929 California accounts imply, using a Bay-area
@@ -615,9 +615,9 @@ function Chart(cfg){
     var nd=(a.desc||[]).length;
     var blockBottom = ty + (nd ? 22+(nd-1)*20 : 0) + 6;      // lowest ink of the label
     var y2 = a.dy<0 ? blockBottom+6 : ty-19;                 // stop clear of the text
-    g += '<line class="leader" stroke="'+cfg.color+'" x1="'+(x+Math.sign(a.dx||1)*6).toFixed(1)+
+    g += (a.noLeader ? '' : '<line class="leader" stroke="'+cfg.color+'" x1="'+(x+Math.sign(a.dx||1)*6).toFixed(1)+
          '" y1="'+(y+Math.sign(a.dy)*6).toFixed(1)+'" x2="'+(tx-Math.sign(a.dx||1)*5).toFixed(1)+
-         '" y2="'+y2.toFixed(1)+'"/>'+
+         '" y2="'+y2.toFixed(1)+'"/>')+
          '<circle cx="'+x.toFixed(1)+'" cy="'+y.toFixed(1)+'" r="4" fill="'+cfg.color+'"/>'+
          '<text class="annv" x="'+tx.toFixed(1)+'" y="'+ty.toFixed(1)+'" text-anchor="'+a.anchor+
          '" fill="'+cfg.color+'">'+esc(a.val)+'</text>';
@@ -687,7 +687,7 @@ function drawAll(){
            {lo:BAND.lo,hi:BAND.hi,from:2024,to:2026,fill:BLUE_SOFT}],
     get:function(y){ return M.s[ix(y)]; },
     anns:[{year:1880,dx:14,dy:-41,anchor:"start",val:"2.1% by 1880",desc:["silver, rail and Pacific finance"]},
-          {year:1900,dx:-14,dy:96,anchor:"end",val:"1.8% in 1900",desc:["as the Midwest industrialised"]},
+          {year:1900,dx:-40,dy:70,anchor:"end",val:"1.8% in 1900",desc:["as the Midwest industrialised"]},
           {year:2021,dx:-117,dy:-30,anchor:"end",val:"5.0% peak, 2021",desc:[]}],
     end:{year:2026,val:pct1(M.s[ix(2026)]),sub:"2026 H1 · nowcast"},
     tipData:function(y){
@@ -708,7 +708,7 @@ function drawAll(){
     xTicks:[1850,1900,1950,2026], markers:D.censusYears,
     segs:[{from:1850,to:2020,w:2.6},{from:2020,to:2026,w:2,dash:"3 4"}],
     get:function(y){ return ps(y); },
-    anns:[{year:1990,dx:-14,dy:-34,anchor:"end",val:"2.51% in 1990",desc:["the peak"]}],
+    anns:[{year:1990,dx:-14,dy:-34,anchor:"end",val:"2.51% in 1990",desc:["the peak"],noLeader:true}],
     end:{year:2026,val:pct1(ps(2026)),sub:"2026"},
     tipData:function(y){ return {head:pct(ps(y)),
       rows:[["Residents",D.bayPop[ix(y)].toLocaleString()],
@@ -726,7 +726,7 @@ function drawAll(){
     bands:[{lo:BAND.rlo,hi:BAND.rhi,from:1850,to:2000,fill:ORANGE_SOFT},
            {lo:BAND.rlo,hi:BAND.rhi,from:2024,to:2026,fill:ORANGE_SOFT}],
     get:function(y){ return M.r[ix(y)]; },
-    anns:[{year:1973,dx:-12,dy:52,anchor:"end",val:"1.25× in 1973",desc:[]}],
+    anns:[{year:1973,dx:-50,dy:40,anchor:"end",val:"1.25× in 1973",desc:[]}],
     end:{year:2026,val:mult(M.r[ix(2026)]),sub:"2026 H1"},
     tipData:function(y){ return {head:mult(M.r[ix(y)]),
       rows:[["Share of U.S. GDP",pct(M.s[ix(y)])],["Population share",pct(ps(y))]],
@@ -741,9 +741,9 @@ function drawAll(){
     yLabel:"residents, ten counties", xTicks:XT, markers:D.censusYears,
     segs:[{from:1850,to:2020,w:2.8},{from:2020,to:2026,w:2.2,dash:"3 4"}],
     get:function(y){ return D.bayPop[ix(y)]; },
-    anns:[{year:1950,dx:-12,dy:-87,anchor:"end",val:"+54% in the 1940s",
+    anns:[{year:1950,dx:-45,dy:-70,anchor:"end",val:"+54% in the 1940s",
            desc:["war work at Richmond and Sausalito"]},
-          {year:D.popTrough,dx:-12,dy:92,anchor:"end",val:"−219k from the 2020 peak",desc:[]}],
+          {year:D.popTrough,dx:-40,dy:110,anchor:"end",val:"−219k from the 2020 peak",desc:[]}],
     end:{year:2026,val:mfmt(D.bayPop[ix(2026)]),sub:"2026 est."},
     tipData:function(y){
       var v=D.bayPop[ix(y)], prev=y>Y0+10?D.bayPop[ix(y-10)]:null;
