@@ -1019,7 +1019,7 @@ var svg = document.getElementById("map");
 var tip = document.getElementById("tip");
 var panel = document.getElementById("panel");
 
-var LABEL_OFFSET = { "San Francisco": {dx:60, dy:-16, leader:true} };
+var LABEL_OFFSET = { "San Francisco": {dx:60, dy:-16, leader:true}, "San Mateo": {dx:6, dy:-14} };
 var HIT_PAD = { "San Francisco": 15 };
 
 function render(){
@@ -1039,7 +1039,7 @@ function render(){
            '" stroke="var(--ink)" stroke-width="1" opacity="0.6"/>'+
            '<circle cx="'+d.cx.toFixed(1)+'" cy="'+d.cy.toFixed(1)+'" r="2.4" fill="var(--ink)"/>';
     }
-    g += '<text class="countylabel'+((off ? false : darkLabel(d))?" onDark":"")+'" data-i="'+i+'" x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'">'+d.name+'</text>';
+    g += '<text class="countylabel'+((off && off.leader ? false : darkLabel(d))?" onDark":"")+'" data-i="'+i+'" x="'+lx.toFixed(1)+'" y="'+ly.toFixed(1)+'">'+d.name+'</text>';
   });
   svg.innerHTML = g;
 
