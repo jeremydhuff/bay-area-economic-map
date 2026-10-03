@@ -400,7 +400,7 @@ footer{margin:70px 0 0;padding-top:18px;border-top:2px solid var(--ink);
       since &mdash; none of the modern rise in output share is people.</p>
       <div class="chartbox">
         <svg id="cPopShare" viewBox="0 0 560 330" role="img"
-          aria-label="Bay Area population as a share of U.S. population, rising from 0.21% in 1850 to a peak of 2.51% in 1990 and easing to 2.30% by 2026."></svg>
+          aria-label="Bay Area population as a share of U.S. population, rising from 0.21% in 1850 to a peak of 2.51% in 1990 and easing to 2.30% by July 2026."></svg>
         <div class="tip" id="tipPopShare" role="status" aria-live="polite"></div>
       </div>
       <p class="src">Decennial census counts to 2020; Census Bureau annual estimates after.</p>
@@ -427,11 +427,11 @@ footer{margin:70px 0 0;padding-top:18px;border-top:2px solid var(--ink);
   decade of the 1940s, and it is smaller today than at the 2020 census.</p>
   <div class="chartbox">
     <svg id="cPopLevel" viewBox="0 0 1160 400" role="img"
-      aria-label="Combined population of the ten Bay Area counties, 1850 to 2026: about 48,000 in 1852, 2.7 million in 1950, 7.0 million in 2000, peaking at 8.04 million at the 2020 census and easing to about 7.88 million by 2026."></svg>
+      aria-label="Combined population of the ten Bay Area counties, 1850 to 2026: about 48,000 in 1852, 2.7 million in 1950, 7.0 million in 2000, peaking at 8.04 million at the 2020 census and easing to about 7.88 million by July 2026."></svg>
     <div class="tip" id="tipPopLevel" role="status" aria-live="polite"></div>
   </div>
   <p class="src">Markers are census enumerations; the stretch after 2020 is Census Bureau annual
-  estimates, ratio-spliced to the 2020 census base. 2026 Q2 (1 July) is a nowcast: the 2025 estimate grown by each county's January-to-January change in California Department of Finance estimates (E-1, May 2026).</p>
+  estimates, ratio-spliced to the 2020 census base. The 2026 point is a nowcast for 1 July 2026, the end of Q2: the 2025 estimate grown by each county's January-to-January change in California Department of Finance estimates (E-1, May 2026).</p>
 </section>
 
 <!-- ══ METHOD ═══════════════════════════════════════════════════════════ -->
@@ -594,7 +594,7 @@ Data to 3 October 2026. Estimates before 2001 and after 2024 are the author's.</
 
   <div class="countypanel" id="panel">
     <h3>County detail</h3>
-    <p class="placeholder" id="panelPlaceholder">Hover or tap a county to see its 2026 nowcast population, GDP, and GDP per capita.</p>
+    <p class="placeholder" id="panelPlaceholder">Hover or tap a county to see its 1 July 2026 (end of Q2) population nowcast, GDP, and GDP per capita.</p>
   </div>
 </div>
 
@@ -885,7 +885,7 @@ function drawAll(){
     segs:[{from:1850,to:2020,w:2.6},{from:2020,to:2026,w:2,dash:"3 4"}],
     get:function(y){ return ps(y); },
     anns:[{year:1990,dx:-14,dy:-34,anchor:"end",val:"2.51% in 1990",desc:["the peak"],noLeader:true}],
-    end:{year:2026,val:pct1(ps(2026)),sub:"2026"},
+    end:{year:2026,val:pct1(ps(2026)),sub:"Jul 2026"},
     tipData:function(y){ return {head:pct(ps(y)),
       rows:[["Residents",D.bayPop[ix(y)].toLocaleString()],
             ["Share of U.S. GDP",pct(M.s[ix(y)])]],
@@ -920,7 +920,7 @@ function drawAll(){
     anns:[{year:1950,dx:-45,dy:-70,anchor:"end",val:"+54% in the 1940s",
            desc:["war work at Richmond and Sausalito"]},
           {year:D.popTrough,dx:-40,dy:110,anchor:"end",val:"−219k from the 2020 peak",desc:[]}],
-    end:{year:2026,val:mfmt(D.bayPop[ix(2026)]),sub:"2026 est."},
+    end:{year:2026,val:mfmt(D.bayPop[ix(2026)]),sub:"Jul 2026 est."},
     tipData:function(y){
       var v=D.bayPop[ix(y)], prev=y>Y0+10?D.bayPop[ix(y-10)]:null;
       var rows=[["Residents",v.toLocaleString()],["Share of U.S.",pct(ps(y))]];
@@ -1069,13 +1069,13 @@ function showPanel(d){
     '<div class="stat"><span class="k">Population</span><span class="v">'+fmtPop(d.population2026)+'</span></div>'+
     '<div class="stat"><span class="k">GDP</span><span class="v">'+fmtGdp(d.gdp2026USD)+'</span></div>'+
     '<div class="stat"><span class="k">GDP per capita</span><span class="v">'+fmtPC(d.perCapita2026USD)+'</span></div>'+
-    '<p class="basis">2026 Q2 nowcast &middot; population from Census Vintage-2025 grown by California DOF estimates; '+
+    '<p class="basis">2026 Q2 nowcast &middot; population at 1 July 2026 (end of Q2), Census Vintage-2025 grown by California DOF estimates; '+
     'GDP allocated from the aggregate nowcast by this county’s 2024 measured share (' +
     (100*d.gdp2024USD/D.reduce(function(s,x){return s+x.gdp2024USD;},0)).toFixed(1)+'% of the ten-county total), adjusted for recent wage growth.</p>';
 }
 
 function resetPanel(){
-  panel.innerHTML = '<h3>County detail</h3><p class="placeholder" id="panelPlaceholder">Hover or tap a county to see its 2026 nowcast population, GDP, and GDP per capita.</p>';
+  panel.innerHTML = '<h3>County detail</h3><p class="placeholder" id="panelPlaceholder">Hover or tap a county to see its 1 July 2026 (end of Q2) population nowcast, GDP, and GDP per capita.</p>';
 }
 
 function attachEvents(){
