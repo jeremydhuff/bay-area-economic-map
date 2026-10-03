@@ -2,7 +2,7 @@ bay area GDP share, income vs. national average, and other stats
 
 ## Updating the data
 
-> **Status: unverified.** `update_data.py` and this procedure were written but never completed a successful end-to-end test run (the test runs timed out pulling from FRED/BLS). The pull-and-compute logic mirrors the manual update done on 2026-10-03, which was verified by hand. On the next update, run it with `--dry-run` first and compare the output to the page; if it fails or disagrees, fall back to the manual steps in the comment at the top of `index.html`. Pulls are slow (about 50 downloads, run one after another).
+> **Status: verified once (2026-10-03).** A full run of `update_data.py` reproduced the hand-built update to within rounding (county GDP differed by ~0.0001%, two per-capita values by $1) and wrote `index.html` correctly. It does not rewrite prose, aria-labels or stat tiles, so do the checklist it prints. A run takes a few minutes (about 50 downloads, one after another). FRED hangs if a browser User-Agent is sent, so the script omits it for FRED. If it fails, fall back to the manual steps in the comment at the top of `index.html`.
 
 When asked to "update the site" / "update the whole thing", do a **full update across the whole site**, labeling the latest period by quarter (e.g. "2026 Q2", never "H1"), and refresh every part that depends on the data.
 

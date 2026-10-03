@@ -36,8 +36,9 @@ def get(url, tries=4):
     import subprocess
     last = None
     for _ in range(tries):
-        r = subprocess.run(["curl", "-sSL", "-m", "40", "-A", "Mozilla/5.0", "-w", "%{http_code}", url],
-                           capture_output=True)
+        # FRED hangs if a browser User-Agent is sent; BLS/DOF want one.
+        ua = [] if "fred.stlouisfed.org" in url else ["-A", "Mozilla/5.0"]
+        r = subprocess.run(["curl", "-sSL", "-m", "40", *ua, "-w", "%{http_code}", url], capture_output=True)
         code, body = r.stdout[-3:], r.stdout[:-3]
         if r.returncode == 0 and code == b"200" and body:
             return body
