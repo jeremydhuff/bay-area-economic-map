@@ -220,7 +220,7 @@ a{color:var(--blue);text-underline-offset:2px;text-decoration-thickness:.6px}
 .mapbox{position:relative}
 svg#map{display:block;width:100%;height:auto}
 .county{stroke:var(--rule-2);stroke-width:1.1;cursor:pointer;transition:fill .12s,stroke .12s}
-#map:hover .county{stroke:var(--ink)}
+.hoveroutline{fill:none;stroke:var(--ink);stroke-width:1.6;stroke-linejoin:round;pointer-events:none}
 .county:hover, .county.hover{filter:brightness(.88)}
 .countylabel{font-size:12.5px;font-weight:600;fill:var(--ink);pointer-events:none;
   text-anchor:middle;paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}
@@ -1081,6 +1081,8 @@ function attachEvents(){
 function onEnter(i){
   var d = D[i];
   svg.querySelectorAll(".county[data-i='"+i+"']").forEach(function(el){ el.classList.add("hover"); });
+  var ov = document.createElementNS("http://www.w3.org/2000/svg","path");
+  ov.setAttribute("class","hoveroutline"); ov.setAttribute("d",d.d); svg.appendChild(ov);
   showPanel(d);
   tip.innerHTML = '<div class="y">'+d.name.toUpperCase()+'</div>'+
     '<div class="v">'+METRICS[metric].fmt(METRICS[metric].get(d))+'</div>'+
@@ -1104,6 +1106,7 @@ function onMove(ev){
 }
 function onLeave(i){
   svg.querySelectorAll(".county[data-i='"+i+"']").forEach(function(el){ el.classList.remove("hover"); });
+  svg.querySelectorAll(".hoveroutline").forEach(function(el){ el.remove(); });
   tip.classList.remove("on");
 }
 
