@@ -2,6 +2,8 @@
   UPDATE POLICY: every data update is a FULL update across the whole site. Label the latest period by
   quarter ("2026 Q2", never "H1"/"mid-year"), and refresh every part that uses the data: headline chart + stat
   tiles, assumptions/methodology text, sources, footer date, aria-labels, county map, and this log.
+  NOTE: update_data.py automates the steps below but is UNVERIFIED (no successful end-to-end run yet). Dry-run it first and
+  compare to the page; fall back to these manual steps if it fails.
   DATA UPDATE LOG: when asked to refresh with the latest GDP data, re-pull from FRED
   (https://fred.stlouisfed.org/graph/fredgraph.csv?id=<SERIES>) and update the payload JSON:
     - CANQGSP (CA quarterly GDP) and GDP (US quarterly)  -> payload.gammaQ (= CA / (US*1000)),
